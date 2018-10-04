@@ -10,7 +10,7 @@ extern Adafruit_NeoPixel* strip_l;
 extern Adafruit_NeoPixel* strip_r;
 
 // current animation function pointer
-extern void (*leds_cur_anim)(uint64_t,uint64_t);
+extern void (*leds_cur_anim)(uint64_t);
 
 // control modes
 extern volatile uint8_t mode;

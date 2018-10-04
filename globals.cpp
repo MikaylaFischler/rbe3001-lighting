@@ -5,7 +5,7 @@ Adafruit_NeoPixel* strip_l = NULL;
 Adafruit_NeoPixel* strip_r = NULL;
 
 // current animation function pointer
-void (*leds_cur_anim)(void) = NULL;
+void (*leds_cur_anim)(uint64_t) = NULL;
 
 // control modes
 volatile uint8_t mode = 0;

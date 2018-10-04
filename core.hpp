@@ -45,7 +45,7 @@ void i2c_handle_receive(int bytes);
 // led functoins
 void leds_init(void);
 void leds_update(void);
-void leds_run(void);
+void leds_run(uint64_t elapsed_time);
 
 // led util functions
 void _leds_combined_write(uint8_t pixel, uint32_t color);

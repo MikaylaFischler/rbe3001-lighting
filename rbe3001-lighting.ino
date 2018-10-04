@@ -1,6 +1,6 @@
 #include "core.hpp"
 
-uint64_t cur_time = 0;
+uint64_t elapsed_time = 0;
 uint64_t prev_time = 0;
 
 void setup() {
@@ -10,7 +10,7 @@ void setup() {
 
 void loop() {
 	leds_update();
-	cur_time = millis() - prev_time;
-	prev_time = millis();
-	leds_run(cur_time, prev_time);
+	elapsed_time = micros() - prev_time;
+	prev_time = micros();
+	leds_run(elapsed_time);
 }
