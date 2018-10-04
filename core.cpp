@@ -51,7 +51,7 @@ void leds_update(void) {
 	}
 }
 
-void leds_run(void) { leds_cur_anim(); }
+void leds_run(uint64_t time, uint64_t last_time) { leds_cur_anim(time, last_time); }
 
 void _leds_combined_write(uint8_t pixel, uint32_t color) {
 	strip_l->setPixelColor(pixel, color);
