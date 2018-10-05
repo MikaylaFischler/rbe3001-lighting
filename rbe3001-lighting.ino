@@ -30,7 +30,10 @@ void loop() {
 	prev_time = micros();
 	leds_run(elapsed_time);
 
+	/* Serial.println(Wire.available()); */
+
 	#ifdef DEBUG
-	Serial.println((long int)elapsed_time);
+	/* Serial.print(F("0x"));
+	Serial.println(mode, HEX); */
 	#endif
 }

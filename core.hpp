@@ -12,7 +12,7 @@ void _leds_combined_show(void);
 #define DEBUG
 
 // I2C config
-#define REDBOARD_ADDR 0x2
+#define REDBOARD_ADDR 0x70
 #define I2C_FREQUENCY 100000
 
 // strip configurations

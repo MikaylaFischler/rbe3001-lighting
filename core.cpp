@@ -4,12 +4,14 @@ void i2c_init(void) {
 	mode = 0;
 	Wire.begin(REDBOARD_ADDR);
 	Wire.setClock(I2C_FREQUENCY);
-	Wire.onReceive(i2c_handle_receive);
+	// Wire.onReceive(i2c_handle_receive);
 }
 
 void i2c_handle_receive(int bytes) {
 	for (int i = 0; i < bytes; i++) { mode = Wire.read(); }
 	mode_changed = true;
+	Serial.print("0x");
+	Serial.println(mode, HEX);
 }
 
 void leds_init(void) {
@@ -24,9 +26,9 @@ void leds_init(void) {
 	strip_l->show();
 	strip_r->show();
 
-	leds_cur_anim = anim__place;
+	leds_cur_anim = anim__nocomms_idle;
 
-	mode = ST_MODE_PLACE_YELLOW;
+	mode = ST_MODE_NOCOMMS_IDLE;
 	mode_changed = 0;
 }
 
