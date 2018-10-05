@@ -9,10 +9,10 @@ void setup() {
 	Serial.println("Setup starting...");
 	#endif
 
-	i2c_init();
+	serial_init();
 
 	#ifdef DEBUG
-	Serial.println("Initialized I2C...");
+	Serial.println("Initialized Software Serial...");
 	#endif
 
 	leds_init();
@@ -25,15 +25,14 @@ void setup() {
 }
 
 void loop() {
+	serial_read();
 	leds_update();
 	elapsed_time = micros() - prev_time;
 	prev_time = micros();
 	leds_run(elapsed_time);
 
-	/* Serial.println(Wire.available()); */
-
 	#ifdef DEBUG
-	/* Serial.print(F("0x"));
-	Serial.println(mode, HEX); */
+	Serial.print(F("0x"));
+	Serial.println(mode, HEX);
 	#endif
 }

@@ -3,7 +3,6 @@
 
 // libraries
 #include <Adafruit_NeoPixel.h>
-#include <Wire.h>
 
 // led strips
 extern Adafruit_NeoPixel* strip_l;

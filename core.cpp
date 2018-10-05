@@ -1,17 +1,29 @@
 #include "core.hpp"
 
-void i2c_init(void) {
-	mode = 0;
-	Wire.begin(REDBOARD_ADDR);
-	Wire.setClock(I2C_FREQUENCY);
-	// Wire.onReceive(i2c_handle_receive);
+SoftwareSerial* serial = NULL;
+
+void serial_init(void) {
+	mode = ST_MODE_NOCOMMS_IDLE;
+	mode_changed = false;
+
+	pinMode(SOFT_UART_TX, OUTPUT);
+	pinMode(SOFT_UART_RX, INPUT);
+
+	serial = new SoftwareSerial(SOFT_UART_RX, SOFT_UART_TX);
+	serial->begin(4800);
 }
 
-void i2c_handle_receive(int bytes) {
-	for (int i = 0; i < bytes; i++) { mode = Wire.read(); }
-	mode_changed = true;
-	Serial.print("0x");
-	Serial.println(mode, HEX);
+void serial_read(void) {
+	uint8_t parity;
+	uint8_t old_mode = mode;
+	if (serial->available() >= 2) {
+		mode = serial->read();
+		parity = serial->read();
+
+		if (in & parity) { mode = old_mode; }
+	}
+
+	mode_changed = (mode != old_mode);
 }
 
 void leds_init(void) {
@@ -27,9 +39,6 @@ void leds_init(void) {
 	strip_r->show();
 
 	leds_cur_anim = anim__nocomms_idle;
-
-	mode = ST_MODE_NOCOMMS_IDLE;
-	mode_changed = 0;
 }
 
 void leds_update(void) {
@@ -54,7 +63,8 @@ void leds_update(void) {
 			}
 		}
 
-		leds_run(0);
+		// leds_run(0);
+		mode_changed = false;
 	}
 }
 

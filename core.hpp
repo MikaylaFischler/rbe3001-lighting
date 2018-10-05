@@ -1,6 +1,7 @@
 #ifndef RBE3001_CORE_H_
 #define RBE3001_CORE_H_
 
+#include <SoftwareSerial.h>
 #include "globals.hpp"
 
 // led util functions
@@ -9,11 +10,11 @@ void _leds_combined_show(void);
 
 #include "patterns.hpp"
 
-#define DEBUG
+// #define DEBUG
 
-// I2C config
-#define REDBOARD_ADDR 0x70
-#define I2C_FREQUENCY 100000
+// SoftwareSerial config
+#define SOFT_UART_TX 2
+#define SOFT_UART_RX 3
 
 // strip configurations
 #define STRIP_LENGTH 9
@@ -48,9 +49,10 @@ void _leds_combined_show(void);
 #define MODE_PLACE		0x20
 #define MODE_HEAVY		0x40
 
-// i2c functions
-void i2c_init(void);
-void i2c_handle_receive(int bytes);
+// SoftwareSerial
+extern SoftwareSerial* serial;
+void serial_init(void);
+void serial_read(void);
 
 // led functoins
 void leds_init(void);
