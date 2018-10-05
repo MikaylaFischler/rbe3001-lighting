@@ -2,6 +2,11 @@
 #define RBE3001_CORE_H_
 
 #include "globals.hpp"
+
+// led util functions
+void _leds_combined_write(uint8_t pixel, uint32_t color);
+void _leds_combined_show(void);
+
 #include "patterns.hpp"
 
 #define DEBUG
@@ -32,6 +37,7 @@
 // mask checks
 #define MODE_COMMS		0x80
 #define MODE_RUNNING	0x01
+#define MODE_COLOR		0x0E
 #define MODE_YELLOW		0x02
 #define MODE_GREEN		0x04
 #define MODE_BLUE		0x08
@@ -46,9 +52,5 @@ void i2c_handle_receive(int bytes);
 void leds_init(void);
 void leds_update(void);
 void leds_run(uint64_t elapsed_time);
-
-// led util functions
-void _leds_combined_write(uint8_t pixel, uint32_t color);
-void _leds_combined_show(void);
 
 #endif
