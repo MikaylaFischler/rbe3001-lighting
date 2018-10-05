@@ -19,7 +19,7 @@ void anim__nocomms_idle(uint64_t elapsed_time) {
 	}
 
 	if ((time_cnt / 1000) % 15 == 0) {
-		for (int i = 1; i < 8; i++) {
+		for (uint8_t i = 1; i < 8; i++) {
 			if (i == 4) { i = 5; }
 			_leds_combined_write(i, strip_l->Color(counter,counter,counter));
 			if (counter == 255) { direction = 0; } else if (counter == 25) { direction = 1; }
@@ -49,7 +49,7 @@ void anim__idle(uint64_t elapsed_time) {
 	}
 
 	if ((time_cnt / 1000) % 50 == 0) {
-		for (int i = 1; i < 8; i++) {
+		for (uint8_t i = 1; i < 8; i++) {
 			if (i == 4) { i = 5; }
 			_leds_combined_write(i, strip_l->Color(counter,counter,counter));
 			if (counter == 150) { direction = 0; } else if (counter == 25) { direction = 1; }
@@ -84,9 +84,9 @@ void anim__running(uint64_t elapsed_time) {
 		time_cnt = 0;
 	}
 
-	for (int i = 1; i < 8; i++) {
+	for (uint8_t i = 1; i < 8; i++) {
 		if (i > 4) {
-			if (7 - i < counter) {
+			if ((uint8_t) (7 - i) < counter) {
 				_leds_combined_write(i, color);
 			} else {
 				_leds_combined_write(i, 0);
@@ -126,7 +126,7 @@ void anim__weigh(uint64_t elapsed_time) {
 		time_cnt = 0;
 	}
 
-	for (int i = 1; i < 8; i++) {
+	for (uint8_t i = 1; i < 8; i++) {
 		if ((i == counter) || (i == (counter + 1))) {
 			_leds_combined_write(i, color);
 		} else {
@@ -140,7 +140,47 @@ void anim__weigh(uint64_t elapsed_time) {
 }
 
 void anim__place(uint64_t elapsed_time) {
+	// reset on 0
+	if (elapsed_time == 0) {
+		time_cnt = 0;
+		counter = 255;
+	}
 
+	uint32_t color = color_from_mode();
+	uint32_t color2, color3;
+
+	if (mode & MODE_HEAVY) {
+		color2 = strip_l->Color(counter, 0, 0);
+		color3 = strip_l->Color(280 - counter, (280 - counter)/3, 0);
+	} else {
+		color2 = strip_l->Color(counter, counter, counter);
+		color3 = color2;
+	}
+
+	if (time_cnt == 0) {
+		_leds_combined_write(0, color);
+		_leds_combined_write(4, color);
+		_leds_combined_write(8, color);
+	}
+
+	if (time_cnt > 150000) {
+		if (counter == 255) { direction = 0; } else if (counter == 25) { direction = 1; }
+		if (direction) { counter += 1; } else { counter -= 1; }
+	}
+
+	for (uint8_t i = 1; i < 8; i++) {
+		if (i == 4) { i = 5; }
+
+		if (i == 2 || i == 6) {
+			_leds_combined_write(i, color3);
+		} else {
+			_leds_combined_write(i, color2);
+		}
+	}
+
+	_leds_combined_show();
+
+	time_cnt += elapsed_time;
 }
 
 uint32_t color_from_mode(void) {

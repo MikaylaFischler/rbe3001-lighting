@@ -33,6 +33,9 @@ void _leds_combined_show(void);
 #define ST_MODE_PLACE_YELLOW	0xA3
 #define ST_MODE_PLACE_GREEN		0xA5
 #define ST_MODE_PLACE_BLUE		0xA9
+#define ST_MODE_PLACE_H_YELLOW	0xE3
+#define ST_MODE_PLACE_H_GREEN	0xE5
+#define ST_MODE_PLACE_H_BLUE	0xE9
 
 // mask checks
 #define MODE_COMMS		0x80
@@ -43,6 +46,7 @@ void _leds_combined_show(void);
 #define MODE_BLUE		0x08
 #define MODE_WEIGH		0x10
 #define MODE_PLACE		0x20
+#define MODE_HEAVY		0x40
 
 // i2c functions
 void i2c_init(void);
@@ -52,5 +56,8 @@ void i2c_handle_receive(int bytes);
 void leds_init(void);
 void leds_update(void);
 void leds_run(uint64_t elapsed_time);
+
+// check packet validity
+inline uint8_t packet_malformed(uint8_t packet);
 
 #endif

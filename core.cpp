@@ -24,28 +24,32 @@ void leds_init(void) {
 	strip_l->show();
 	strip_r->show();
 
-	leds_cur_anim = anim__weigh;
+	leds_cur_anim = anim__place;
 
-	mode = ST_MODE_FOUND_GREEN;
+	mode = ST_MODE_PLACE_YELLOW;
 	mode_changed = 0;
 }
 
 void leds_update(void) {
 	if (mode_changed) {
-		if (mode & MODE_COMMS) {
-			if (mode & MODE_RUNNING) {
-				if (mode & MODE_WEIGH) {
-					leds_cur_anim = anim__weigh;
-				} else if (mode & MODE_PLACE) {
-					leds_cur_anim = anim__place;
+		if (/*packet_malformed(mode)*/ false) {
+			// leds_cur_anim = anim__error;
+		} else {
+			if (mode & MODE_COMMS) {
+				if (mode & MODE_RUNNING) {
+					if (mode & MODE_WEIGH) {
+						leds_cur_anim = anim__weigh;
+					} else if (mode & MODE_PLACE) {
+						leds_cur_anim = anim__place;
+					} else {
+						leds_cur_anim = anim__running;
+					}
 				} else {
-					leds_cur_anim = anim__running;
+					leds_cur_anim = anim__idle;
 				}
 			} else {
-				leds_cur_anim = anim__idle;
+				leds_cur_anim = anim__nocomms_idle;
 			}
-		} else {
-			leds_cur_anim = anim__nocomms_idle;
 		}
 
 		leds_run(0);
@@ -62,4 +66,10 @@ void _leds_combined_write(uint8_t pixel, uint32_t color) {
 void _leds_combined_show(void) {
 	strip_l->show();
 	strip_r->show();
+}
+
+uint8_t packet_malformed(uint8_t packet) {
+	// INCOMPLETE
+	//		validate weight			validate mode				validate color				validate running
+	return (packet & 0x40) || !((packet & 0x30) ^ 0x30) || !((packet & 0xE) ^ 0xE) || ((packet & 0x3E) && ~(packet & 0x1));
 }
