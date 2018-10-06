@@ -25,14 +25,9 @@ void setup() {
 }
 
 void loop() {
-	serial_read();
 	leds_update();
 	elapsed_time = micros() - prev_time;
 	prev_time = micros();
 	leds_run(elapsed_time);
-
-	#ifdef DEBUG
-	Serial.print(F("0x"));
-	Serial.println(mode, HEX);
-	#endif
+	serial_read(elapsed_time);
 }

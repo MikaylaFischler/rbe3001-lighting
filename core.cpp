@@ -1,26 +1,45 @@
 #include "core.hpp"
 
 SoftwareSerial* serial = NULL;
+uint64_t serial_idle_timeout = 0;
 
 void serial_init(void) {
 	mode = ST_MODE_NOCOMMS_IDLE;
-	mode_changed = false;
+	mode_changed = true;
 
 	pinMode(SOFT_UART_TX, OUTPUT);
 	pinMode(SOFT_UART_RX, INPUT);
 
 	serial = new SoftwareSerial(SOFT_UART_RX, SOFT_UART_TX);
 	serial->begin(4800);
+
+	serial->write(0x7A); // our "ACK"
 }
 
-void serial_read(void) {
+void serial_read(uint64_t elapsed_time) {
 	uint8_t parity;
 	uint8_t old_mode = mode;
 	if (serial->available() >= 2) {
 		mode = serial->read();
 		parity = serial->read();
+		serial->write(0x7A); // our "ACK"
 
-		if (in & parity) { mode = old_mode; }
+		#ifdef DEBUG
+		// Serial.print(mode, HEX);
+		// Serial.print(" & ");
+		// Serial.print(parity, HEX);
+		// Serial.print(" : ");
+		// Serial.print(mode & parity, HEX);
+		// Serial.print(" with ");
+		Serial.print(serial->available());
+		Serial.println(" available.");
+		#endif
+
+		if (mode & parity) { mode = old_mode; }
+	} else if (mode == ST_MODE_NOCOMMS_IDLE) {
+		if (serial_idle_timeout == 0) { serial->write(0x7A); }
+		serial_idle_timeout += elapsed_time;
+		if (serial_idle_timeout >= 200000) { serial_idle_timeout = 0; }
 	}
 
 	mode_changed = (mode != old_mode);
@@ -63,7 +82,7 @@ void leds_update(void) {
 			}
 		}
 
-		// leds_run(0);
+		leds_run(0);
 		mode_changed = false;
 	}
 }
