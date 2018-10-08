@@ -1,7 +1,12 @@
 #include "core.hpp"
 
-SoftwareSerial* serial = NULL;
-uint64_t serial_idle_timeout = 0;
+struct comms {
+	SoftwareSerial* uart;
+	uint8_t ready;
+	uint64_t last_request;
+	uint64_t last_response;
+	uint64_t timeout;
+} serial_comms;
 
 void serial_init(void) {
 	mode = ST_MODE_NOCOMMS_IDLE;
@@ -10,39 +15,56 @@ void serial_init(void) {
 	pinMode(SOFT_UART_TX, OUTPUT);
 	pinMode(SOFT_UART_RX, INPUT);
 
-	serial = new SoftwareSerial(SOFT_UART_RX, SOFT_UART_TX);
-	serial->begin(4800);
+	serial_comms.uart = new SoftwareSerial(SOFT_UART_RX, SOFT_UART_TX);
+	serial_comms.uart->begin(19200);
 
-	serial->write(0x7A); // our "ACK"
+	serial_comms.ready = 1;
+	serial_comms.last_request = 0;
+	serial_comms.last_response = 0;
+	serial_comms.timeout = micros() + 1000000;
 }
 
-void serial_read(uint64_t elapsed_time) {
-	uint8_t parity;
-	uint8_t old_mode = mode;
-	if (serial->available() >= 2) {
-		mode = serial->read();
-		parity = serial->read();
-		serial->write(0x7A); // our "ACK"
-
-		#ifdef DEBUG
-		// Serial.print(mode, HEX);
-		// Serial.print(" & ");
-		// Serial.print(parity, HEX);
-		// Serial.print(" : ");
-		// Serial.print(mode & parity, HEX);
-		// Serial.print(" with ");
-		Serial.print(serial->available());
-		Serial.println(" available.");
-		#endif
-
-		if (mode & parity) { mode = old_mode; }
-	} else if (mode == ST_MODE_NOCOMMS_IDLE) {
-		if (serial_idle_timeout == 0) { serial->write(0x7A); }
-		serial_idle_timeout += elapsed_time;
-		if (serial_idle_timeout >= 200000) { serial_idle_timeout = 0; }
+void serial_request(void) {
+	if (serial_comms.ready && ((micros() - 50000) > serial_comms.last_request)) {
+		serial_comms.uart->write(0xAC);
+		serial_comms.last_request = micros();
+		serial_comms.ready = 0;
 	}
+}
 
-	mode_changed = (mode != old_mode);
+void serial_read(void) {
+	static uint8_t data, parity, stop;
+	uint8_t old_mode = mode;
+	mode_changed = 0;
+
+	if (serial_comms.uart->available() >= 4) {
+		data = serial_comms.uart->read();
+		if (data == 0x7A) {
+			data = serial_comms.uart->read();
+			parity = serial_comms.uart->read();
+			stop = serial_comms.uart->read();
+
+			if ((data & parity) || packet_malformed(data)) {
+				mode = old_mode;
+			} else {
+				mode = data;
+			}
+
+			mode_changed = mode != old_mode;
+
+			serial_comms.last_response = micros();
+			serial_comms.ready = 1;
+			serial_comms.timeout = micros() + 1000000;
+		}
+	} else if (serial_comms.timeout < micros()) {
+		#ifdef DEBUG
+		Serial.println("No Comms!");
+		#endif
+		mode = ST_MODE_NOCOMMS_IDLE;
+		mode_changed = 1;
+		serial_comms.ready = 1;
+		serial_comms.timeout = micros() + 1000000;
+	}
 }
 
 void leds_init(void) {
@@ -62,28 +84,24 @@ void leds_init(void) {
 
 void leds_update(void) {
 	if (mode_changed) {
-		if (/*packet_malformed(mode)*/ false) {
-			// leds_cur_anim = anim__error;
-		} else {
-			if (mode & MODE_COMMS) {
-				if (mode & MODE_RUNNING) {
-					if (mode & MODE_WEIGH) {
-						leds_cur_anim = anim__weigh;
-					} else if (mode & MODE_PLACE) {
-						leds_cur_anim = anim__place;
-					} else {
-						leds_cur_anim = anim__running;
-					}
+		if (mode & MODE_COMMS) {
+			if (mode & MODE_RUNNING) {
+				if (mode & MODE_WEIGH) {
+					leds_cur_anim = anim__weigh;
+				} else if (mode & MODE_PLACE) {
+					leds_cur_anim = anim__place;
 				} else {
-					leds_cur_anim = anim__idle;
+					leds_cur_anim = anim__running;
 				}
 			} else {
-				leds_cur_anim = anim__nocomms_idle;
+				leds_cur_anim = anim__idle;
 			}
+		} else {
+			leds_cur_anim = anim__nocomms_idle;
 		}
 
 		leds_run(0);
-		mode_changed = false;
+		mode_changed = 0;
 	}
 }
 
@@ -100,7 +118,17 @@ void _leds_combined_show(void) {
 }
 
 uint8_t packet_malformed(uint8_t packet) {
-	// INCOMPLETE
-	//		validate weight			validate mode				validate color				validate running
-	return (packet & 0x40) || !((packet & 0x30) ^ 0x30) || !((packet & 0xE) ^ 0xE) || ((packet & 0x3E) && ~(packet & 0x1));
+	return
+	    // validate connection/enable bit
+	    ((~packet & 0x80)   &&  (packet & 0x7F)) ||
+	    // validate running bit
+	    ((~packet & 0x1)    &&  (packet & 0x7E)) ||
+	    // validate color uniqueness
+	    (((packet & 0x4) >> 1)  & (packet & 0x2)) ||
+	    (((packet & 0x8) >> 2)  & (packet & 0x2)) ||
+	    (((packet & 0x8) >> 1)  & (packet & 0x4)) ||
+	    // validate state
+	    (((packet & 0x20) >> 1) & (packet & 0x10)) ||
+	    (((packet & 0x40) >> 2) & (packet & 0x10)) ||
+	    (((packet & 0x40) >> 1) & (~packet & 0x20));
 }

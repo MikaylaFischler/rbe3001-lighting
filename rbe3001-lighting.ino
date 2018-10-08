@@ -29,5 +29,6 @@ void loop() {
 	elapsed_time = micros() - prev_time;
 	prev_time = micros();
 	leds_run(elapsed_time);
-	serial_read(elapsed_time);
+	serial_request();
+	serial_read();
 }

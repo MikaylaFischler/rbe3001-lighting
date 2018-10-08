@@ -10,7 +10,7 @@ void _leds_combined_show(void);
 
 #include "patterns.hpp"
 
-#define DEBUG
+// #define DEBUG
 
 // SoftwareSerial config
 #define SOFT_UART_TX 2
@@ -50,9 +50,9 @@ void _leds_combined_show(void);
 #define MODE_HEAVY		0x40
 
 // SoftwareSerial
-extern SoftwareSerial* serial;
 void serial_init(void);
-void serial_read(uint64_t elapsed_time);
+void serial_request(void);
+void serial_read(void);
 
 // led functoins
 void leds_init(void);
